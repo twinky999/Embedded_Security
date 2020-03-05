@@ -27,7 +27,7 @@ aes_context AES_CTX = NULL; // Used for chatbox encryption and decryption -- not
  * @return void
  */
 void gen_sk_init(){
-  // TODO
+  gen_random_block(sk_init);
 }
 
 /**
@@ -37,7 +37,7 @@ void gen_sk_init(){
  * @return void
  */
 void gen_iv(){
-  // TODO
+  gen_random_block(iv);
 }
 
 /**
@@ -48,17 +48,23 @@ void gen_iv(){
  * @return void
  */
 void write_msg(uint8_t *msg, uint8_t numBlocksOf16Bytes){
-  // TODO
+  for (uint8_t i = 0; i < numBlocksOf16Bytes; i++)
+  {
+    for (uint8_t i = 0; i < BLOCK_LEN; i++)
+    {
+      mySerial.write(msg[i]);
+    }
+  }
 }
 
 /**
  * Write a 'newline' on the softserial bus.
- *
+ * Serial.println
  * @param void
  * @return void
  */
 void write_newline(){
-  // TODO
+  mySerial.println();
 }
 
 /**
@@ -68,7 +74,10 @@ void write_newline(){
  * @return void
  */
 void read_msg(char *res){
-  // TODO
+  for (uint8_t i = 0; i < BLOCK_LEN; i++)
+  {
+    res[i] = mySerial.read();
+  }
 }
 
 /**
@@ -78,7 +87,10 @@ void read_msg(char *res){
  * @return void
  */
 void read_enc_msg(char *msg){
-  // TODO
+  char res[BLOCK_LEN];
+  mySerial.listen();
+  read_msg(res);
+  decrypt(res, session_key, iv, msg);
 }
 
 /**
@@ -88,7 +100,10 @@ void read_enc_msg(char *msg){
  * @return void
  */
 void write_enc_msg(char *msg){
-  // TODO
+  char res[BLOCK_LEN];
+
+  encrypt(res, session_key, iv, msg);
+  write_msg((uint8_t *)res, 1);
 }
 
 /**
@@ -98,7 +113,13 @@ void write_enc_msg(char *msg){
  * @return void
  */
 void print_uint8_arr(uint8_t *arr){
-  // TODO
+  String tmp = "";
+  for (uint8_t i = 0; i < BLOCK_LEN; i++)
+  {
+    tmp += arr[i];
+    tmp += "\t";
+  }
+  mySerial.println(tmp);
 }
 
 /**
@@ -117,7 +138,8 @@ void auth(){
   Serial.println("================ MASTER ================");
 #endif
 
-  // TODO
+  mySeria.listen();
+  while(mySerial.)
 
 #ifdef DEBUG
   Serial.println(F("============ END AUTH PROC ============"));
@@ -188,7 +210,7 @@ void loop()
     aes128_cbc_enc_continue(AES_CTX, str_buf, total_chars);
 
     // Send the encrypted message to the slave
-    write_msg(str_buf, num_blocks);
+    write_msg((uint8_t*)str_buf, num_blocks);
     write_newline();
 
     // Start listening again to the softserial bus

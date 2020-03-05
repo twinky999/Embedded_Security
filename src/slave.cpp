@@ -28,7 +28,13 @@ aes_context AES_CTX = NULL; // Used for chatbox encryption and decryption -- not
  */
 void write_msg(uint8_t *msg, uint8_t numBlocksOf16Bytes)
 {
-  // TODO
+    for (uint8_t i = 0; i < numBlocksOf16Bytes; i++)
+  {
+    for (uint8_t i = 0; i < BLOCK_LEN; i++)
+    {
+      mySerial.write(msg[i]);
+    }
+  }
 }
 
 /**
@@ -39,7 +45,7 @@ void write_msg(uint8_t *msg, uint8_t numBlocksOf16Bytes)
  */
 void write_newline()
 {
-  // TODO
+  mySerial.println();
 }
 
 /**
@@ -50,7 +56,10 @@ void write_newline()
  */
 void read_msg(char *res)
 {
-  // TODO
+  for (uint8_t i = 0; i < BLOCK_LEN; i++)
+  {
+    res[i] = mySerial.read();
+  }
 }
 
 /**
@@ -61,7 +70,12 @@ void read_msg(char *res)
  */
 void read_enc_msg(char *msg)
 {
-  // TODO
+  char res[BLOCK_LEN];
+  
+  mySerial.listen();
+
+  read_msg(res);
+  decrypt(res, session_key, iv, msg);
 }
 
 /**
@@ -72,7 +86,10 @@ void read_enc_msg(char *msg)
  */
 void write_enc_msg(char *msg)
 {
-  // TODO
+  char res[BLOCK_LEN];
+
+  encrypt(msg, session_key, iv, res);
+  write_msg((uint8_t *)res, 1);
 }
 
 /**
@@ -83,7 +100,13 @@ void write_enc_msg(char *msg)
  */
 void print_uint8_arr(uint8_t *arr)
 {
-  // TODO
+  String tmp = "";
+  for (uint8_t i = 0; i < BLOCK_LEN; i++)
+  {
+    tmp += arr[i];
+    tmp += "\t";
+  }
+  mySerial.println(tmp);
 }
 
 /**
@@ -168,7 +191,7 @@ void loop()
         aes128_cbc_enc_continue(AES_CTX, str_buf, total_chars);
 
         // Send the encrypted message to the master
-        write_msg(str_buf, num_blocks);
+        write_msg((uint8_t*)str_buf, num_blocks);
         write_newline();
 
         // Start listening again to the softserial bus
